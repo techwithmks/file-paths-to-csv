@@ -4,7 +4,9 @@ const path = require("path");
 let serialNum = 0;
 
 /**
- * Method to add the header to the CSV file
+ * @description : Method to get the header of the csv file
+ * @param csvArr : array containing the csv strings
+ * @param schema : schema of the result
  */
 const addHeaderToResult = (csvArr, schema) => {
   let str = [];
@@ -15,18 +17,26 @@ const addHeaderToResult = (csvArr, schema) => {
 };
 
 /**
- * method to get the CSV string
+ * @description : Method to get the individual data row of the csv file
+ * @param csvArr : array containing the csv strings
+ * @param schema : schema of the result
+ * @param dataObj : data for the each row of the csv
  */
-function getCsvRow(serialNum, fileName) {
-  return `${serialNum}, ${fileName}, ${path.extname(fileName)}, ${
-    fs.statSync(fileName).size
-  }\n`;
-}
+const addDataRowToResult = (csvArr, schema, dataObj) => {
+  let str = [];
+  schema.forEach((item) => {
+    str.push(item.val(dataObj));
+  });
+  csvArr.push(str.join(",") + "\n");
+};
 
 /**
- * Method to recursively get the list of files.
+ * @description : Primary method, which is recursively called, to get the files list.
+ * @param directoryPath : path of the directory
+ * @param csvArr : array containing the csv string
+ * @param schema : data for the each row of the csv
  */
-const getFilesList = (directoryPath, csvArr) => {
+const getFilesList = (directoryPath, csvArr, schema) => {
   const filesNameList = fs.readdirSync(directoryPath);
 
   const directories = [],
@@ -47,7 +57,10 @@ const getFilesList = (directoryPath, csvArr) => {
         csvArr.push("\n");
       }
 
-      csvArr.push(getCsvRow(++serialNum, fileName));
+      addDataRowToResult(csvArr, schema, {
+        serial_num: ++serialNum,
+        path: fileName,
+      });
 
       if (index === arr.length - 1) {
         csvArr.push("\n");
@@ -57,7 +70,7 @@ const getFilesList = (directoryPath, csvArr) => {
   directories
     .sort((a, b) => a - b)
     .forEach((fileName) => {
-      getFilesList(fileName, csvArr);
+      getFilesList(fileName, csvArr, schema);
     });
 };
 
